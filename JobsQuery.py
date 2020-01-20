@@ -47,7 +47,10 @@ def my_function(event, context):
     ean = { "#dt": "date" }
 
     # Variable that will be used to append new jobs to
-    job_info = ''
+    if event != []:
+        job_info = 'Websites that did not work: ' + str(event) + '\n\n'
+    else:
+        job_info = ''
 
     # Scan table in DB
     response = table.scan(

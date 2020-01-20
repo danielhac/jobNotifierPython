@@ -13,30 +13,35 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
 import time
+import json
 
 # Set number of threads
 executor = ThreadPoolExecutor(max_workers=4)
+
+# Create error variable in JSON format
+errors = []
 
 # Enable Chrome options
 chrome_options = Options()
 
 #### Comment out when testing locally 
-# chrome_options.add_argument('--headless')
-# chrome_options.add_argument('--no-sandbox')
-# chrome_options.add_argument('--disable-gpu')
-# chrome_options.add_argument('--window-size=1280x1696')
-# chrome_options.add_argument('--user-data-dir=/tmp/user-data')
-# chrome_options.add_argument('--hide-scrollbars')
-# chrome_options.add_argument('--enable-logging')
-# chrome_options.add_argument('--log-level=0')
-# chrome_options.add_argument('--v=99')
-# chrome_options.add_argument('--single-process')
-# chrome_options.add_argument('--data-path=/tmp/data-path')
-# chrome_options.add_argument('--ignore-certificate-errors')
-# chrome_options.add_argument('--homedir=/tmp')
-# chrome_options.add_argument('--disk-cache-dir=/tmp/cache-dir')
-# chrome_options.add_argument('user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36')
-# chrome_options.binary_location = os.getcwd() + "/bin/headless-chromium"
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-gpu')
+chrome_options.add_argument('--window-size=1280x1696')
+chrome_options.add_argument('--user-data-dir=/tmp/user-data')
+chrome_options.add_argument('--hide-scrollbars')
+chrome_options.add_argument('--enable-logging')
+chrome_options.add_argument('--log-level=0')
+chrome_options.add_argument('--v=99')
+chrome_options.add_argument('--single-process')
+chrome_options.add_argument('--data-path=/tmp/data-path')
+chrome_options.add_argument('--ignore-certificate-errors')
+chrome_options.add_argument('--homedir=/tmp')
+chrome_options.add_argument('--disk-cache-dir=/tmp/cache-dir')
+chrome_options.add_argument('user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36')
+chrome_options.binary_location = os.getcwd() + "/bin/headless-chromium"
+
 
 def func_houzz(company):
     driver = webdriver.Chrome(chrome_options=chrome_options)
@@ -45,7 +50,9 @@ def func_houzz(company):
         element = WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.ID, "Santa Monica, CA, US")))
     except:
-        print('didnt work')
+        print(company + ' didnt work')
+        errors.append(company)
+        driver.close()
         return company + 'didnt work'
     elem = driver.find_element_by_xpath("//a[@id='Santa Monica, CA, US']/../..")
     items = elem.find_elements_by_xpath("following-sibling::tr")
@@ -72,7 +79,8 @@ def func_zillow(company):
         element = WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.CLASS_NAME, "k-grid-content")))
     except:
-        print('didnt work')
+        print(company + ' didnt work')
+        errors.append(company)
         driver.close()
         return company + 'didnt work'
     elem = driver.find_element_by_class_name('k-grid-content')
@@ -99,7 +107,8 @@ def func_acorns(company):
         element = WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.CLASS_NAME, "irvine")))
     except:
-        print('didnt work')
+        print(company + ' didnt work')
+        errors.append(company)
         driver.close()
         return company + 'didnt work'
     elem = driver.find_element_by_class_name('irvine')
@@ -128,7 +137,8 @@ def func_ciedigital(company):
         element = WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.CLASS_NAME, "job-preview")))
     except:
-        print('didnt work')
+        print(company + ' didnt work')
+        errors.append(company)
         driver.close()
         return company + 'didnt work'
     
@@ -157,7 +167,8 @@ def func_kareo(company):
         element = WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.ID, "jobs_table")))
     except:
-        print('didnt work')
+        print(company + ' didnt work')
+        errors.append(company)
         driver.close()
         return company + 'didnt work'
     elem = driver.find_element_by_id('jobs_table')
@@ -185,7 +196,8 @@ def func_ephesoft(company):
         element = WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.ID, "bhrDepartmentID_18506")))
     except:
-        print('didnt work')
+        print(company + ' didnt work')
+        errors.append(company)
         driver.close()
         return company + 'didnt work'
     elem = driver.find_element_by_id('bhrDepartmentID_18506')
@@ -227,17 +239,17 @@ def my_function(event, context):
     loop.run_forever()
     loop.close()
 
-
     # Invoke Lambda for E-mail
     client = boto3.client('lambda')
     response = client.invoke(
         FunctionName='my-function',
-        InvocationType='RequestResponse'
-    )            
+        InvocationType='RequestResponse',
+        Payload=json.dumps(errors)
+    )
 
     print("Completed...")
     return 'Successfully completed job.'
 
 
 ##### Comment out when running on AWS Lambda
-my_function('','')
+# my_function('','')
