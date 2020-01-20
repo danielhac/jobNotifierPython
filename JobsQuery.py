@@ -86,5 +86,6 @@ def my_function(event, context):
     # Terminate SMTP session and close the connection
     s.quit()
 
+
 ##### Comment out when running on AWS Lambda
 # my_function('','')
